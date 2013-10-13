@@ -1,0 +1,128 @@
+Active Record Basics
+
+1 What is Active Record (AR)?
+  - Active Record is the model in MVC
+  - AR facilitates the creation of objects whose data requires persistent storage to a database
+  - AR is an implementation of the Active Record pattern, which is an Object Relational Mapping system
+
+1.1 The Active Record Pattern (ARP)
+  - In ARP, objects carry both persistent data and behaviors which operate on that data
+
+ 1.2 Object Relational Mapping (ORM)
+  - ORM is a technique that connects the objects of an application to tables in a relational database
+  - Using ORM, the properties and relationships of objects can be stored and retrieved from a database without writing SQL directly
+
+  1.3 Active Record as an ORM Framework
+  - AR gives us several mechanisms:
+    - Represent models and their data
+    - Represent associations between these models
+    - Represent inheritance hierarchies through related models
+    - Validate models before they get persisted to the db
+    - Perform db operations in an object-oriented fashion
+
+
+2 Convention over Configuration in Active Record
+  - If you follow the conventions adopted by Rails, you will have to write very little configuration code when creating AR models
+  - convention over configuration: configure your applications the same way most of the time and make this the default
+  - explicit configuration is only needed when you can't follow the conventions for some reason
+
+2.1 Naming Conventions
+  - AR uses naming conventions to determine the mapping between models and database tables
+  - rails will pluralize your class names to find the correct db table
+  - when using class names, composed of two or more words, the model class name should use CamelCase form, while the table name must contain the words separated by underscores
+  - db table: plural with underscores separating words ie. book_clubs
+  - model class: singular with the first letter of each word capitalized ie. BookClub
+
+2.2 Schema Conventions
+  - AR uses naming conventions for the columns in db tables based on the purpose of the column
+  - foreign keys: singularized_table_name_id These are the fields that AR will look for when you create associations between your models
+  - primary keys: AR uses an integer column named id as the table's primary key. This is automatically created when using Rails Migrations to create your tables
+  - There are also optional column names which facilitate additional AR features for AR instances:
+    - created_at: automatically gets set to the current date and time when the record is first created
+    - updated_at: automatically gets set to the curretn data and time whenever the record is updated
+    - lock_version: adds optimistic locking to a model
+    - type: specifies that the model uses single table inheritance
+    - (association_name)_type: stores the type for polymorphic associations
+    - (table_name)_count: used to cache the number of belonging objects on associations
+
+
+3 Creating Active Record Models
+  - subclass the ActiveRecord::Base class to create AR models:
+    class Product < ActiveRecord::Base
+    end
+
+
+4 Overriding the Naming Conventions
+  - AR naming conventions can be overridden 
+  - you can use the ActiveRecord::Base.table_name= method to specify the table name that should be used:
+    class Product < ActiveRecord::Base
+      self.table_name = "PRODUCT"
+    end
+  - if you set your own table name, you have to manually define the class name that is hosting the fixtures (class_name.yml) using the set_fixture_class method in your test definition:
+    class FunnyJoke < ActiveSUpport::TestCase
+      set_fixture_class funny_jokes: 'Joke'
+      fixtures :funny_jokes
+      ...
+    end
+  - it's also possible to override the column that should be used as teh table's primary key using the ActiveRecord::Base.set_primary_key method:
+    class Product < ActiveRecord::Base
+      set_primary_key "product_id"
+    end
+
+
+5 CRUD: Reading and Writing Data
+  - CRUD is an acronym for the four verbs used to operate on data: Create, Read, Update, and Delete
+  - AR automatically creates methods to allow an application to read and manipulate data stored within its tables
+
+5.1 Create
+  - AR objects can be created from a hash, a block or have their attributes set manually after creation
+  - the new method will return a new object while create will return the object and save it to the db
+
+5.2 Read
+  - AR provides an API for accessing data within a db:
+    - return a collection with all users: users = User.all
+    - return the first user: user = User.first
+    - return the first user named David: david = User.find_by_name('David')
+    - find all users named David who are Code Artists and sot by created_at in reverse chronological order: users = User.where(name: 'David', occupation: 'Code Artist').order('created_at DESC')
+
+5.3 Update 
+  - once an AR object has been retrieved, its attributes can be modified and it can be saved to the db:
+    user = User.find_by_name('David')
+    user.name = 'Dave'
+    user.save
+
+    or 
+
+    user = User.find_by_name('David')
+    user.update(name: 'Dave')
+  - you can also update several records in bulk:
+    User.update_all "max_login_attempts = 3, must_change_password = 'true'"
+
+5.4 Delete
+  - once retrieved an AR object can be destroyed (which removes it from the db):
+    user = User.find_by_name('David')
+    user.destroy
+
+
+6 Validations
+  - AR allows you to validate the state of the model before it gets written to the db
+  - validation methods allow you to check your models and validate that an attribute value is not empty, is unique and not already in the db, follows a specific format, and many more
+  - create, save, and update perform the specified validations when running. they return false when the validation fails and they dont perform and db operations when this occurs
+  - create!, save!, and update! with bangs are stricter. they raise the exception ActiveRecord::RecordInvalid if validation fails
+
+
+7 Callbacks
+  - AR callbacks allow you to attach code to certain events in the life-cycle of your models
+  - allows you to add behavior to yoru models by executing code when those events occur
+
+
+8 Migrations
+  - rails provides a domain-specific language (DSL) for managing a db schema called migrations
+  - migrations are stored in files which are executed against any db that AR supports using rake
+  - rails keeps track of which files have been committed to the db and provides rollback features
+  - to create the table, you'd run rake db:migrate and to roll it back, rake db:rollback
+  - migrations are database agnostic
+
+
+
+
